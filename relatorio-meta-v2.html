@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Desempenho — Instagram</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0D1117;
+    --bg2:       #161B22;
+    --bg3:       #1C2230;
+    --bg4:       #21262D;
+    --border:    #30363D;
+    --border2:   #3D444D;
+    --txt:       #E6EDF3;
+    --txt2:      #8B949E;
+    --txt3:      #6E7681;
+    --cyan:      #39D0F0;
+    --cyan-dim:  rgba(57,208,240,.12);
+    --green:     #3FB950;
+    --green-dim: rgba(63,185,80,.12);
+    --red:       #F85149;
+    --red-dim:   rgba(248,81,73,.12);
+    --yellow:    #D29922;
+    --purple:    #A371F7;
+    --ig1:       #833AB4;
+    --ig2:       #C13584;
+    --ig3:       #E1306C;
+    --ig4:       #F77737;
+    --ig5:       #FCAF45;
+  }
+
+  html { font-size: 14px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ═══════════════ HEADER ═══════════════ */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0 10px;
+    flex-wrap: wrap;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--ig1), var(--ig3), var(--ig5));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    box-shadow: 0 0 14px rgba(193,53,132,.4);
+  }
+  .brand-text h1 { font-size: 15px; font-weight: 700; color: var(--txt); letter-spacing: -.3px; }
+  .brand-text p  { font-size: 11.5px; color: var(--txt2); margin-top: 1px; }
+  .header-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 13px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; border: 1px solid var(--border2);
+    background: var(--bg3);
+  }
+  .badge.ig {
+    background: linear-gradient(135deg,rgba(131,58,180,.25),rgba(225,48,108,.25));
+    border-color: rgba(225,48,108,.4); color: #F48FB1;
+  }
+  .badge.live { color: var(--green); border-color: rgba(63,185,80,.3); }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .week-bar {
+    display: flex; gap: 24px; padding: 8px 0 13px; flex-wrap: wrap;
+  }
+  .week-tag {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 600;
+  }
+  .week-tag .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .week-tag .label { color: var(--txt2); }
+  .week-tag .range { font-weight: 700; }
+  .week-tag.ant .dot  { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  .week-tag.ant .range { color: var(--cyan); }
+  .week-tag.atu .dot  { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .week-tag.atu .range { color: var(--green); }
+
+  /* ═══════════════ TABS ═══════════════ */
+  .tabs-bar {
+    display: flex; gap: 2px;
+    padding: 0 28px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 12px 18px; border: none; background: transparent;
+    color: var(--txt2); font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all .2s; position: relative; top: 1px;
+  }
+  .tab-btn:hover { color: var(--txt); }
+  .tab-btn.active {
+    color: var(--txt);
+    border-bottom-color: var(--cyan);
+  }
+  .tab-btn .tab-icon { font-size: 15px; }
+
+  /* ═══════════════ CONTENT ═══════════════ */
+  .page { display: none; padding: 28px; max-width: 1280px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ═══════════════ SECTION TITLE ═══════════════ */
+  .sec-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--txt2);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .sec-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ═══════════════ KPI CARDS ═══════════════ */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px; margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 18px 14px;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+    cursor: default;
+  }
+  .kpi-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.up::before   { background: linear-gradient(90deg, var(--green), transparent); }
+  .kpi-card.down::before { background: linear-gradient(90deg, var(--red), transparent); }
+  .kpi-card.neu::before  { background: linear-gradient(90deg, var(--txt3), transparent); }
+
+  .kpi-label { font-size: 11px; color: var(--txt2); font-weight: 600; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+  .kpi-row   { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .kpi-val   { font-size: 28px; font-weight: 800; color: var(--txt); line-height: 1; }
+  .kpi-delta {
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .kpi-delta.up   { background: var(--green-dim); color: var(--green); }
+  .kpi-delta.down { background: var(--red-dim);   color: var(--red);   }
+  .kpi-delta.neu  { background: var(--bg4);        color: var(--txt2);  }
+  .kpi-sub { font-size: 11.5px; color: var(--txt3); }
+  .kpi-sub span { color: var(--txt2); }
+
+  /* ═══════════════ COMPARATIVE TABLE ═══════════════ */
+  .comp-block { margin-bottom: 36px; }
+  .comp-note { font-size: 11.5px; color: var(--txt3); margin-bottom: 14px; line-height: 1.6; }
+
+  .comp-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  .comp-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; min-width: 680px;
+  }
+  .comp-table thead tr {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-table thead th {
+    padding: 11px 16px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px; color: var(--txt2);
+    text-align: center;
+  }
+  .comp-table thead th:first-child { text-align: left; min-width: 140px; }
+  .comp-table thead th:last-child  { color: var(--txt); }
+
+  .comp-table tbody tr { border-bottom: 1px solid var(--border); }
+  .comp-table tbody tr:last-child { border-bottom: none; }
+
+  .comp-table td { padding: 0; }
+
+  /* metric header row */
+  .row-metric td {
+    padding: 10px 16px 4px;
+    background: var(--bg2);
+    font-size: 12px; font-weight: 700;
+    color: var(--txt2);
+    text-align: center;
+  }
+  .row-metric td:first-child { text-align: left; display: flex; align-items: center; gap: 7px; }
+  .row-metric .m-icon { font-size: 14px; }
+
+  /* day sub-row */
+  .row-days td {
+    padding: 3px 16px 2px;
+    text-align: center;
+    font-size: 11px; color: var(--txt3);
+  }
+  .row-days td:first-child { text-align: left; }
+
+  /* ant row */
+  .row-ant td {
+    padding: 6px 16px;
+    text-align: center;
+    font-size: 13px; font-weight: 700; color: var(--cyan);
+    background: rgba(57,208,240,.04);
+  }
+  .row-ant td:first-child { text-align: left; }
+  .row-ant .week-lbl {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--txt3);
+  }
+  .row-ant .week-lbl .wbadge {
+    font-size: 10px; font-weight: 700; padding: 2px 7px;
+    border-radius: 4px; background: var(--cyan-dim); color: var(--cyan);
+    letter-spacing: .4px;
+  }
+
+  /* atu row */
+  .row-atu td {
+    padding: 6px 16px;
+    text-align: center;
+    font-size: 13px; font-weight: 700; color: var(--green);
+    background: rgba(63,185,80,.04);
+  }
+  .row-atu td:first-child { text-align: left; }
+  .row-atu .week-lbl {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--txt3);
+  }
+  .row-atu .week-lbl .wbadge {
+    font-size: 10px; font-weight: 700; padding: 2px 7px;
+    border-radius: 4px; background: var(--green-dim); color: var(--green);
+    letter-spacing: .4px;
+  }
+
+  /* delta row */
+  .row-delta td {
+    padding: 5px 16px 12px;
+    text-align: center;
+    font-size: 11.5px; font-weight: 700;
+  }
+  .row-delta td:first-child { text-align: left; font-size: 11px; color: var(--txt3); font-weight: 500; }
+  .row-delta .up   { color: var(--green); }
+  .row-delta .down { color: var(--red);   }
+  .row-delta .neu  { color: var(--txt3);  }
+
+  /* separator between metrics */
+  .row-sep td { background: var(--border); height: 1px; padding: 0; }
+
+  /* total cells */
+  .total-ant { color: var(--cyan)  !important; font-weight: 800 !important; }
+  .total-atu { color: var(--green) !important; font-weight: 800 !important; }
+  .dash      { color: var(--txt3) !important; }
+
+  /* ═══════════════ CHARTS ═══════════════ */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .chart-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 22px;
+  }
+  .chart-card h3 {
+    font-size: 12px; font-weight: 700; color: var(--txt2);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px;
+  }
+  .chart-card .chart-sub {
+    font-size: 11.5px; color: var(--txt3); margin-bottom: 14px;
+  }
+  .chart-legend { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+  .cl-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--txt2); font-weight: 600; }
+  .cl-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .chart-wrap { position: relative; height: 210px; }
+
+  /* ═══════════════ INSIGHTS ═══════════════ */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 12px; margin-bottom: 32px;
+  }
+  .ins-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+    border-left: 3px solid var(--border2);
+    transition: border-color .2s, transform .2s;
+  }
+  .ins-card:hover { transform: translateY(-2px); }
+  .ins-card.good   { border-left-color: var(--green); }
+  .ins-card.bad    { border-left-color: var(--red);   }
+  .ins-card.warn   { border-left-color: var(--yellow); }
+  .ins-card.info   { border-left-color: var(--cyan);   }
+  .ins-card .ins-icon { font-size: 22px; margin-bottom: 8px; }
+  .ins-card .ins-title { font-size: 13.5px; font-weight: 700; color: var(--txt); margin-bottom: 6px; }
+  .ins-card .ins-body  { font-size: 12.5px; color: var(--txt2); line-height: 1.6; }
+  .ins-card .ins-body strong { color: var(--txt); }
+
+  /* ═══════════════ RECOMMENDATIONS ═══════════════ */
+  .rec-list { display: flex; flex-direction: column; gap: 10px; }
+  .rec-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; gap: 14px; align-items: flex-start;
+    transition: border-color .2s;
+  }
+  .rec-item:hover { border-color: var(--border2); }
+  .rec-num {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--ig1), var(--ig3));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: #fff;
+    box-shadow: 0 0 10px rgba(193,53,132,.35);
+  }
+  .rec-body strong { font-size: 13.5px; font-weight: 700; color: var(--txt); display: block; margin-bottom: 4px; }
+  .rec-body p { font-size: 12.5px; color: var(--txt2); line-height: 1.6; }
+
+  /* ═══════════════ FOOTER ═══════════════ */
+  .footer {
+    text-align: center; padding: 20px 28px;
+    font-size: 11.5px; color: var(--txt3);
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    margin-top: 12px;
+  }
+
+  /* ═══════════════ RESPONSIVE ═══════════════ */
+  @media(max-width:640px){
+    .header,.tabs-bar,.page{ padding-left:14px; padding-right:14px; }
+    .kpi-val{ font-size:22px; }
+    .charts-grid{ grid-template-columns:1fr; }
+    .insights-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ═══════════════ ANIMATIONS ═══════════════ */
+  .page.active .kpi-card { animation: fadeUp .35s ease both; }
+  .page.active .kpi-card:nth-child(1){ animation-delay:.04s }
+  .page.active .kpi-card:nth-child(2){ animation-delay:.08s }
+  .page.active .kpi-card:nth-child(3){ animation-delay:.12s }
+  .page.active .kpi-card:nth-child(4){ animation-delay:.16s }
+  .page.active .kpi-card:nth-child(5){ animation-delay:.20s }
+  .page.active .kpi-card:nth-child(6){ animation-delay:.24s }
+  .page.active .kpi-card:nth-child(7){ animation-delay:.28s }
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(12px) }
+    to  { opacity:1; transform:translateY(0)    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="brand-icon">📊</div>
+      <div class="brand-text">
+        <h1>Relatório de Desempenho — Instagram</h1>
+        <p>Comparativo Semanal · Meta Insights · Gerado em 08/05/2026</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="badge ig">📷 Instagram</div>
+      <div class="badge live"><div class="live-dot"></div> Atualizado</div>
+    </div>
+  </div>
+  <div class="week-bar">
+    <div class="week-tag ant">
+      <div class="dot"></div>
+      <span class="label">Semana Anterior:</span>
+      <span class="range">Qua 30/04 → Sáb 03/05</span>
+    </div>
+    <div class="week-tag atu">
+      <div class="dot"></div>
+      <span class="label">Semana Atual:</span>
+      <span class="range">Dom 04/05 → Qua 07/05</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TABS ═══════════════ -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('visao',this)">
+    <span class="tab-icon">🏠</span> Visão Geral
+  </button>
+  <button class="tab-btn" onclick="switchTab('comparativo',this)">
+    <span class="tab-icon">📊</span> Comparativo Diário
+  </button>
+  <button class="tab-btn" onclick="switchTab('graficos',this)">
+    <span class="tab-icon">📈</span> Gráficos
+  </button>
+  <button class="tab-btn" onclick="switchTab('insights',this)">
+    <span class="tab-icon">💡</span> Insights
+  </button>
+  <button class="tab-btn" onclick="switchTab('recs',this)">
+    <span class="tab-icon">🎯</span> Recomendações
+  </button>
+</div>
+
+
+<!-- ═══════════════ PAGE: VISÃO GERAL ═══════════════ -->
+<div class="page active" id="page-visao">
+  <div class="sec-title">📌 Resumo — Semana Atual (04/05 – 07/05)</div>
+  <div class="kpi-grid">
+
+    <div class="kpi-card down">
+      <div class="kpi-label">👁️ Alcance</div>
+      <div class="kpi-row">
+        <div class="kpi-val">725</div>
+        <div class="kpi-delta down">▼ 1,5%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>736</span></div>
+    </div>
+
+    <div class="kpi-card down">
+      <div class="kpi-label">🎬 Visualizações</div>
+      <div class="kpi-row">
+        <div class="kpi-val">1.856</div>
+        <div class="kpi-delta down">▼ 6,0%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>1.975</span></div>
+    </div>
+
+    <div class="kpi-card up">
+      <div class="kpi-label">❤️ Interações</div>
+      <div class="kpi-row">
+        <div class="kpi-val">73</div>
+        <div class="kpi-delta up">▲ 10,6%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>66</span></div>
+    </div>
+
+    <div class="kpi-card up">
+      <div class="kpi-label">🔗 Cliques no Link</div>
+      <div class="kpi-row">
+        <div class="kpi-val">7</div>
+        <div class="kpi-delta up">▲ 75,0%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>4</span></div>
+    </div>
+
+    <div class="kpi-card up">
+      <div class="kpi-label">👤 Visitas ao Perfil</div>
+      <div class="kpi-row">
+        <div class="kpi-val">37</div>
+        <div class="kpi-delta up">▲ 76,2%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>21</span></div>
+    </div>
+
+    <div class="kpi-card down">
+      <div class="kpi-label">➕ Novos Seguidores</div>
+      <div class="kpi-row">
+        <div class="kpi-val">1</div>
+        <div class="kpi-delta down">▼ 75,0%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>4</span></div>
+    </div>
+
+    <div class="kpi-card up">
+      <div class="kpi-label">💡 Taxa de Engajamento</div>
+      <div class="kpi-row">
+        <div class="kpi-val">10,1%</div>
+        <div class="kpi-delta up">▲ 12,2%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>8,97%</span></div>
+    </div>
+
+    <div class="kpi-card up">
+      <div class="kpi-label">📊 CTR (Cliques/Views)</div>
+      <div class="kpi-row">
+        <div class="kpi-val">0,38%</div>
+        <div class="kpi-delta up">▲ 88,3%</div>
+      </div>
+      <div class="kpi-sub">Anterior: <span>0,20%</span></div>
+    </div>
+
+  </div>
+
+  <!-- mini chart on overview -->
+  <div class="sec-title">📊 Visão Rápida — Todas as Métricas</div>
+  <div class="chart-card" style="margin-bottom:28px;">
+    <h3>Comparativo Total por Métrica</h3>
+    <div class="chart-sub">Semana anterior vs semana atual — valores totais do período</div>
+    <div class="chart-legend">
+      <div class="cl-item"><div class="cl-dot" style="background:var(--cyan)"></div>Sem. Anterior (30/04–03/05)</div>
+      <div class="cl-item"><div class="cl-dot" style="background:var(--green)"></div>Sem. Atual (04/05–07/05)</div>
+    </div>
+    <div class="chart-wrap" style="height:240px;"><canvas id="overviewBar"></canvas></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ PAGE: COMPARATIVO DIÁRIO ═══════════════ -->
+<div class="page" id="page-comparativo">
+
+  <div class="comp-block">
+    <div class="sec-title">📊 Comparativo Diário — Lado a Lado (Semana Anterior × Semana Atual)</div>
+    <p class="comp-note">
+      Cada coluna representa o dia sequencial dentro da semana (Dia 1 = primeiro dia do período, etc.).<br>
+      <span style="color:var(--cyan)">Azul = Semana Anterior (30/04–03/05)</span> · <span style="color:var(--green)">Verde = Semana Atual (04/05–07/05)</span>
+    </p>
+
+    <div class="comp-table-wrap">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>SEMANA</th>
+            <th>DIA 1</th>
+            <th>DIA 2</th>
+            <th>DIA 3</th>
+            <th>DIA 4</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- ── ALCANCE ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">👁️</span> Alcance</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>290</td><td>195</td><td>132</td><td>119</td>
+            <td class="total-ant">736</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>186</td><td>181</td><td>160</td><td>198</td>
+            <td class="total-atu">725</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="down">▼ 35,9%</span></td>
+            <td><span class="down">▼ 7,2%</span></td>
+            <td><span class="up">▲ 21,2%</span></td>
+            <td><span class="up">▲ 66,4%</span></td>
+            <td><span class="down">▼ 1,5%</span></td>
+          </tr>
+          <tr class="row-sep"><td colspan="6"></td></tr>
+
+          <!-- ── VISUALIZAÇÕES ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">🎬</span> Visualizações</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>1.046</td><td>452</td><td>279</td><td>198</td>
+            <td class="total-ant">1.975</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>370</td><td>711</td><td>340</td><td>435</td>
+            <td class="total-atu">1.856</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="down">▼ 64,6%</span></td>
+            <td><span class="up">▲ 57,3%</span></td>
+            <td><span class="up">▲ 21,9%</span></td>
+            <td><span class="up">▲ 119,7%</span></td>
+            <td><span class="down">▼ 6,0%</span></td>
+          </tr>
+          <tr class="row-sep"><td colspan="6"></td></tr>
+
+          <!-- ── INTERAÇÕES ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">❤️</span> Interações</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>45</td><td>12</td><td>7</td><td>2</td>
+            <td class="total-ant">66</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>6</td><td>17</td><td>8</td><td>42</td>
+            <td class="total-atu">73</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="down">▼ 86,7%</span></td>
+            <td><span class="up">▲ 41,7%</span></td>
+            <td><span class="up">▲ 14,3%</span></td>
+            <td><span class="up">▲ 2.000%</span></td>
+            <td><span class="up">▲ 10,6%</span></td>
+          </tr>
+          <tr class="row-sep"><td colspan="6"></td></tr>
+
+          <!-- ── CLIQUES NO LINK ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">🔗</span> Cliques no Link</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>3</td><td>0</td><td>0</td><td>1</td>
+            <td class="total-ant">4</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>2</td><td>1</td><td>3</td><td>1</td>
+            <td class="total-atu">7</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="down">▼ 33,3%</span></td>
+            <td class="neu">— novo</td>
+            <td class="neu">— novo</td>
+            <td><span class="neu">0,0%</span></td>
+            <td><span class="up">▲ 75,0%</span></td>
+          </tr>
+          <tr class="row-sep"><td colspan="6"></td></tr>
+
+          <!-- ── VISITAS AO PERFIL ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">👤</span> Visitas ao Perfil</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>12</td><td>4</td><td>2</td><td>3</td>
+            <td class="total-ant">21</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>10</td><td>5</td><td>5</td><td>17</td>
+            <td class="total-atu">37</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="down">▼ 16,7%</span></td>
+            <td><span class="up">▲ 25,0%</span></td>
+            <td><span class="up">▲ 150,0%</span></td>
+            <td><span class="up">▲ 466,7%</span></td>
+            <td><span class="up">▲ 76,2%</span></td>
+          </tr>
+          <tr class="row-sep"><td colspan="6"></td></tr>
+
+          <!-- ── SEGUIDORES ── -->
+          <tr class="row-metric">
+            <td><span class="m-icon">➕</span> Novos Seguidores</td>
+            <td></td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Qua 30</td><td>Qui 01</td><td>Sex 02</td><td>Sáb 03</td><td>—</td>
+          </tr>
+          <tr class="row-ant">
+            <td><span class="week-lbl"><span class="wbadge">ANT</span> 30/04–03/05</span></td>
+            <td>1</td><td>2</td><td>0</td><td>1</td>
+            <td class="total-ant">4</td>
+          </tr>
+          <tr class="row-days">
+            <td></td>
+            <td>Dom 04</td><td>Seg 05</td><td>Ter 06</td><td>Qua 07</td><td>—</td>
+          </tr>
+          <tr class="row-atu">
+            <td><span class="week-lbl"><span class="wbadge">ATU</span> 04/05–07/05</span></td>
+            <td>1</td><td>0</td><td>0</td><td>0</td>
+            <td class="total-atu">1</td>
+          </tr>
+          <tr class="row-delta">
+            <td>Δ Variação</td>
+            <td><span class="neu">0,0%</span></td>
+            <td><span class="down">▼ 100%</span></td>
+            <td class="neu">—</td>
+            <td><span class="down">▼ 100%</span></td>
+            <td><span class="down">▼ 75,0%</span></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ PAGE: GRÁFICOS ═══════════════ -->
+<div class="page" id="page-graficos">
+  <div class="sec-title">📈 Evolução Diária — Todos os Períodos</div>
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <h3>Alcance por Dia</h3>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:var(--cyan)"></div>Sem. Anterior</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--green)"></div>Sem. Atual</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartAlcance"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Visualizações por Dia</h3>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:var(--cyan)"></div>Sem. Anterior</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--green)"></div>Sem. Atual</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartViews"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Interações por Dia</h3>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:var(--cyan)"></div>Sem. Anterior</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--ig3)"></div>Sem. Atual</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartInteracoes"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Cliques no Link &amp; Visitas ao Perfil</h3>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:var(--cyan)"></div>Cliques (eixo esq.)</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--purple)"></div>Visitas (eixo dir.)</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartCliquesVisitas"></canvas></div>
+    </div>
+
+    <div class="chart-card" style="grid-column: span 2;">
+      <h3>Engajamento Diário — Período Completo (30/04 – 07/05)</h3>
+      <div class="chart-sub">Interações acumuladas dia a dia ao longo de todo o período monitorado</div>
+      <div class="chart-wrap" style="height:200px;"><canvas id="chartEngFull"></canvas></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════ PAGE: INSIGHTS ═══════════════ -->
+<div class="page" id="page-insights">
+  <div class="sec-title">💡 Principais Destaques</div>
+  <div class="insights-grid">
+
+    <div class="ins-card good">
+      <div class="ins-icon">🚀</div>
+      <div class="ins-title">Engajamento cresceu +12,2%</div>
+      <div class="ins-body">A taxa de engajamento subiu de <strong>8,97%</strong> para <strong>10,07%</strong>. Mesmo com alcance levemente menor, o público está interagindo mais — sinal de que a qualidade do conteúdo melhorou.</div>
+    </div>
+
+    <div class="ins-card good">
+      <div class="ins-icon">🔗</div>
+      <div class="ins-title">CTR quase dobrou</div>
+      <div class="ins-body">Os cliques no link saltaram <strong>75%</strong> (4 → 7) e o CTR foi de 0,20% para <strong>0,38%</strong>. A chamada para ação presente nos conteúdos desta semana foi significativamente mais eficaz.</div>
+    </div>
+
+    <div class="ins-card good">
+      <div class="ins-icon">👤</div>
+      <div class="ins-title">Visitas ao perfil +76%</div>
+      <div class="ins-body">De 21 para <strong>37 visitas</strong>. A quarta-feira (07/05) foi o dia de maior tráfego ao perfil, concentrando <strong>17 visitas</strong> — quase metade de toda a semana em um único dia.</div>
+    </div>
+
+    <div class="ins-card info">
+      <div class="ins-icon">📅</div>
+      <div class="ins-title">Quarta-feira: melhor dia da semana</div>
+      <div class="ins-body">07/05 (quarta) foi destaque em <strong>3 métricas simultâneas</strong>: maior alcance (198), mais interações (42) e mais visitas ao perfil (17). O dia útil de meio de semana parece ser o pico do público.</div>
+    </div>
+
+    <div class="ins-card warn">
+      <div class="ins-icon">⚠️</div>
+      <div class="ins-title">Visualizações em queda (-6%)</div>
+      <div class="ins-body">As visualizações recuaram de 1.975 para <strong>1.856</strong>. Isso pode indicar menor volume de publicações, queda no alcance orgânico ou conteúdo com menor capacidade de retenção inicial.</div>
+    </div>
+
+    <div class="ins-card bad">
+      <div class="ins-icon">📉</div>
+      <div class="ins-title">Seguidores não convertem</div>
+      <div class="ins-body">Apenas <strong>1 novo seguidor</strong> esta semana vs. 4 na anterior (-75%). Com 37 visitas ao perfil, a taxa de conversão foi de apenas <strong>2,7%</strong>. A bio ou o grid pode estar falhando em converter visitantes.</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════ PAGE: RECOMENDAÇÕES ═══════════════ -->
+<div class="page" id="page-recs">
+  <div class="sec-title">🎯 Plano de Ação — Próxima Semana</div>
+  <ul class="rec-list" style="list-style:none;">
+    <li class="rec-item">
+      <div class="rec-num">1</div>
+      <div class="rec-body">
+        <strong>Publique nos picos: quartas e domingos</strong>
+        <p>A quarta-feira (07/05) foi o dia de maior engajamento, alcance e visitas. Domingos (04/05) também reagiram bem em visitas. Programe pelo menos 2 posts por semana nestes dias para maximizar o resultado orgânico.</p>
+      </div>
+    </li>
+    <li class="rec-item">
+      <div class="rec-num">2</div>
+      <div class="rec-body">
+        <strong>Otimize a bio para converter visitantes em seguidores</strong>
+        <p>Com 37 visitas ao perfil e apenas 1 novo seguidor, a taxa de conversão foi de 2,7%. Revise a bio com proposta de valor clara, adicione um CTA direto e destaque o link na bio para aumentar a conversão.</p>
+      </div>
+    </li>
+    <li class="rec-item">
+      <div class="rec-num">3</div>
+      <div class="rec-body">
+        <strong>Replique o formato do conteúdo de segunda-feira (05/05)</strong>
+        <p>O dia 05/05 (segunda) registrou 711 visualizações — o maior da semana atual. Identifique o formato e tema usado nesse dia e crie variações para manter esse nível de visualizações de forma consistente.</p>
+      </div>
+    </li>
+    <li class="rec-item">
+      <div class="rec-num">4</div>
+      <div class="rec-body">
+        <strong>Aumente a frequência para recuperar alcance e visualizações</strong>
+        <p>Alcance (-1,5%) e visualizações (-6%) caíram levemente. Um plano de 4–5 posts/semana com Reels curtos e Carrosséis tende a ampliar o alcance orgânico e compensar a redução no período atual.</p>
+      </div>
+    </li>
+    <li class="rec-item">
+      <div class="rec-num">5</div>
+      <div class="rec-body">
+        <strong>Use o alto engajamento para ativar parcerias e Colabs</strong>
+        <p>Com taxa de engajamento de 10,07% — acima da média do setor (3–6%) — este é o momento ideal para propor Co-autorias com perfis parceiros e ampliar o alcance sem investimento em mídia paga.</p>
+      </div>
+    </li>
+  </ul>
+</div>
+
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div class="footer">
+  Dados exportados do Meta Business Suite · Instagram · Período: 30/04/2026 – 07/05/2026 &nbsp;·&nbsp;
+  ⚠️ Dados de 08/05 excluídos por estarem incompletos (dia em andamento)
+</div>
+
+
+<script>
+// ─── PALETA ─────────────────────────────────────────────────
+const CYAN    = '#39D0F0';
+const GREEN   = '#3FB950';
+const RED     = '#F85149';
+const PURPLE  = '#A371F7';
+const IG3     = '#E1306C';
+const BG2     = '#161B22';
+const BORDER  = '#30363D';
+const TXT2    = '#8B949E';
+
+// ─── DADOS ──────────────────────────────────────────────────
+const days4   = ['Dia 1','Dia 2','Dia 3','Dia 4'];
+const allDays = ['30/04','01/05','02/05','03/05','04/05','05/05','06/05','07/05'];
+
+const alcAnt  = [290, 195, 132, 119];
+const alcAtu  = [186, 181, 160, 198];
+const visAnt  = [1046, 452, 279, 198];
+const visAtu  = [370, 711, 340, 435];
+const intAnt  = [45, 12, 7, 2];
+const intAtu  = [6, 17, 8, 42];
+const clkAll  = [3, 0, 0, 1, 2, 1, 3, 1];
+const vtAll   = [12, 4, 2, 3, 10, 5, 5, 17];
+
+// ─── DEFAULTS ───────────────────────────────────────────────
+Chart.defaults.color         = TXT2;
+Chart.defaults.borderColor   = BORDER;
+Chart.defaults.font.family   = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size     = 11;
+
+const scalesXY = {
+  x: { grid:{ color: BORDER+'55' }, ticks:{ color: TXT2 } },
+  y: { grid:{ color: BORDER+'55' }, ticks:{ color: TXT2 } }
+};
+const noLegend = { legend:{ display:false }, tooltip:{ mode:'index', intersect:false } };
+const baseOpts = { responsive:true, maintainAspectRatio:false, plugins: noLegend, scales: scalesXY };
+
+function mkLine(id, labels, ds){
+  new Chart(document.getElementById(id),{
+    type:'line', data:{ labels, datasets: ds },
+    options:{ ...baseOpts, elements:{ point:{ radius:4, hoverRadius:6 } } }
+  });
+}
+function mkBar(id, labels, ds, extraOpts={}){
+  new Chart(document.getElementById(id),{
+    type:'bar', data:{ labels, datasets: ds },
+    options:{ ...baseOpts, ...extraOpts }
+  });
+}
+
+function lineDs(label, data, color, fill=true){
+  return {
+    label, data, borderColor: color,
+    backgroundColor: color+'22',
+    fill, tension: 0.4,
+    pointBackgroundColor: color,
+    pointBorderColor: BG2, pointBorderWidth: 2
+  };
+}
+function barDs(label, data, color){
+  return { label, data, backgroundColor: color+'CC', borderColor: color, borderWidth:1, borderRadius: 5 };
+}
+
+// ─── OVERVIEW BAR ───────────────────────────────────────────
+new Chart(document.getElementById('overviewBar'),{
+  type:'bar',
+  data:{
+    labels:['Alcance','Visualizações','Interações','Cliques','Visitas','Seguidores'],
+    datasets:[
+      { label:'Sem. Anterior', data:[736,1975,66,4,21,4], backgroundColor: CYAN+'CC', borderColor: CYAN, borderWidth:1, borderRadius:5 },
+      { label:'Sem. Atual',    data:[725,1856,73,7,37,1], backgroundColor: GREEN+'CC', borderColor: GREEN, borderWidth:1, borderRadius:5 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:true, labels:{ color:TXT2, boxWidth:10, padding:14 } }, tooltip:{ mode:'index' } },
+    scales: scalesXY
+  }
+});
+
+// ─── ALCANCE ────────────────────────────────────────────────
+mkLine('chartAlcance', days4, [lineDs('Sem. Anterior', alcAnt, CYAN), lineDs('Sem. Atual', alcAtu, GREEN)]);
+
+// ─── VISUALIZAÇÕES ──────────────────────────────────────────
+mkLine('chartViews', days4, [lineDs('Sem. Anterior', visAnt, CYAN), lineDs('Sem. Atual', visAtu, GREEN)]);
+
+// ─── INTERAÇÕES ─────────────────────────────────────────────
+mkLine('chartInteracoes', days4, [lineDs('Sem. Anterior', intAnt, CYAN), lineDs('Sem. Atual', intAtu, IG3)]);
+
+// ─── CLIQUES + VISITAS ──────────────────────────────────────
+new Chart(document.getElementById('chartCliquesVisitas'),{
+  type:'bar',
+  data:{
+    labels: allDays,
+    datasets:[
+      { ...barDs('Cliques no Link', clkAll, CYAN), yAxisID:'y' },
+      { ...barDs('Visitas ao Perfil', vtAll, PURPLE), yAxisID:'y2' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ mode:'index' } },
+    scales:{
+      x: { grid:{color:BORDER+'55'}, ticks:{color:TXT2} },
+      y:  { position:'left',  grid:{color:BORDER+'55'}, ticks:{color:CYAN}   },
+      y2: { position:'right', grid:{display:false},     ticks:{color:PURPLE} }
+    }
+  }
+});
+
+// ─── ENGAJAMENTO FULL ───────────────────────────────────────
+const allInt = [45,12,7,2,6,17,8,42];
+new Chart(document.getElementById('chartEngFull'),{
+  type:'line',
+  data:{
+    labels: allDays,
+    datasets:[{
+      label:'Interações', data: allInt,
+      borderColor: IG3, backgroundColor: IG3+'22',
+      fill:true, tension:0.4,
+      pointBackgroundColor: allDays.map((_,i) => i < 4 ? CYAN : GREEN),
+      pointBorderColor: BG2, pointBorderWidth:2,
+      pointRadius:5, pointHoverRadius:7
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{mode:'index'} },
+    scales:{
+      x: { grid:{color:BORDER+'55'}, ticks:{color:TXT2} },
+      y: {
+        grid:{color:BORDER+'55'}, ticks:{color:TXT2},
+        beginAtZero:true
+      }
+    }
+  }
+});
+
+// ─── TAB SWITCH ─────────────────────────────────────────────
+function switchTab(id, btn){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
